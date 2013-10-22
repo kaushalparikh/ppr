@@ -32,13 +32,13 @@ extern int32 serial_tx (uint32 bytes, uint8 *buffer);
 extern int32 serial_rx (uint32 bytes, uint8 *buffer);
 
 /* Audio API */
-extern int32 audio_init (void);
+extern int32 audio_init (uint32 frame_duration, uint32 rate);
 
 extern int32 audio_deinit (void);
 
-extern int32 audio_playback (int16 *frame_buffer, uint32 frames);
+extern int32 audio_playback (int16 *frame_buffer, uint8 frames);
 
-extern int32 audio_capture (int16 *frame_buffer, uint32 frames);
+extern int32 audio_capture (int16 *frame_buffer, uint8 frames);
 
 /* Timer API */
 typedef struct
