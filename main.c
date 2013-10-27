@@ -4,7 +4,7 @@
 #include "types.h"
 #include "util.h"
 
-int16 audio_buffer[2*960];
+int16 audio_buffer[960];
 
 void master_loop (void)
 {
@@ -14,7 +14,7 @@ void master_loop (void)
 
   while (1)
   {
-    printf ("Play time %d sec., frame %d, ",
+    printf ("Play time %d sec., frame %d: ",
                ((clock_get_count ()) - start_time)/1000, frame++);
 
     if ((status = audio_capture (audio_buffer, 1)) > 0)
@@ -30,7 +30,7 @@ int main (int argc, char * argv[])
 {
   os_init ();
   
-  if ((audio_init (20, 8000)) > 0)
+  if ((audio_init (1, 20, 8000)) > 0)
   {
     master_loop ();
   }

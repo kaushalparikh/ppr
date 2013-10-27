@@ -32,7 +32,7 @@ extern int32 serial_tx (uint32 bytes, uint8 *buffer);
 extern int32 serial_rx (uint32 bytes, uint8 *buffer);
 
 /* Audio API */
-extern int32 audio_init (uint32 frame_duration, uint32 rate);
+extern int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate);
 
 extern int32 audio_deinit (void);
 

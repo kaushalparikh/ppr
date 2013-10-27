@@ -20,6 +20,7 @@ typedef struct
 {
   snd_pcm_t     *playback_handle;
   snd_pcm_t     *capture_handle;
+  unsigned char  channels;
   unsigned int   frame_duration;
   unsigned char  resample;
   unsigned int   samples;
@@ -31,14 +32,13 @@ static audio_device_t audio_device =
 {
   .playback_handle = NULL,
   .capture_handle  = NULL,
+  .channels        = 2,
   .frame_duration  = 0,
   .resample        = 1,
   .samples         = 0,
   .prev_playback   = {-1, -1}
 };
 
-FILE *capture_file = NULL;
-FILE *playback_file = NULL;
 
 int32 audio_playback (int16 *frame_buffer, uint8 frames)
 {
@@ -55,32 +55,61 @@ int32 audio_playback (int16 *frame_buffer, uint8 frames)
     short int interp[2];
 
     interp[0] = frame_buffer[0] - audio_device.prev_playback[0];
-    interp[1] = frame_buffer[1] - audio_device.prev_playback[1];
-
     for (sample = 0; sample < resample; sample++)
     {
       buffer[2*sample]
         = audio_device.prev_playback[0] + ((sample * interp[0])/resample);
-      buffer[2*sample+1]
-        = audio_device.prev_playback[1] + ((sample * interp[1])/resample);
+    }
+    
+    if (audio_device.channels > 1)
+    {
+      interp[1] = frame_buffer[1] - audio_device.prev_playback[1];
+      for (sample = 0; sample < resample; sample++)
+      {
+        buffer[2*sample+1]
+          = audio_device.prev_playback[1] + ((sample * interp[1])/resample);
+      }
+    }
+    else
+    {
+      for (sample = 0; sample < resample; sample++)
+      {
+        buffer[2*sample+1] = buffer[2*sample];
+      }
     }
 
     for (count = 1; count < (samples_pending/resample); count++)
     {
       interp[0] = frame_buffer[2*count] - frame_buffer[2*(count-1)];
-      interp[1] = frame_buffer[2*count+1] - frame_buffer[2*(count-1)+1];
-      
       for (sample = 0; sample < resample; sample++)
       {
         buffer[2*(resample*count+sample)]
           = frame_buffer[2*(count-1)] + ((sample * interp[0])/resample);
-        buffer[2*(resample*count+sample)+1]
-          = frame_buffer[2*(count-1)+1] + ((sample * interp[1])/resample);
+      }
+      
+      if (audio_device.channels > 1)
+      {
+        interp[1] = frame_buffer[2*count+1] - frame_buffer[2*(count-1)+1];
+        for (sample = 0; sample < resample; sample++)
+        {
+          buffer[2*(resample*count+sample)+1]
+            = frame_buffer[2*(count-1)+1] + ((sample * interp[1])/resample);
+        }
+      }
+      else
+      {
+        for (sample = 0; sample < resample; sample++)
+        {
+          buffer[2*(resample*count+sample)+1] = buffer[2*(resample*count+sample)];
+        }
       }
     }
 
     audio_device.prev_playback[0] = frame_buffer[2*(count-1)];
-    audio_device.prev_playback[1] = frame_buffer[2*(count-1)+1];
+    if (audio_device.channels > 1)
+    {
+      audio_device.prev_playback[1] = frame_buffer[2*(count-1)+1];
+    }
   }
 
   while (samples_pending > 0)
@@ -103,8 +132,6 @@ int32 audio_playback (int16 *frame_buffer, uint8 frames)
       break;
     }
   }
-
-  printf ("written %d", (samples_written/resample));
 
   free (buffer);
 
@@ -144,12 +171,17 @@ int32 audio_capture (int16 *frame_buffer, uint8 frames)
   {
     unsigned int count;
     
-    printf ("Samples read %d ", (samples_read/resample));
-
     for (count = 0; count < (samples_read/resample); count++)
     {
       frame_buffer[2*count]   = buffer[2*resample*count];
-      frame_buffer[2*count+1] = buffer[2*resample*count+1];
+    }
+    
+    if (audio_device.channels > 1)
+    {
+      for (count = 0; count < (samples_read/resample); count++)
+      {
+        frame_buffer[2*count+1] = buffer[2*resample*count+1];
+      }
     }
   }
 
@@ -158,7 +190,7 @@ int32 audio_capture (int16 *frame_buffer, uint8 frames)
   return status;
 }
 
-int32 audio_init (uint32 frame_duration, uint32 rate)
+int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
 {
   int status;
   snd_pcm_hw_params_t *audio_hw = NULL;
@@ -295,6 +327,7 @@ int32 audio_init (uint32 frame_duration, uint32 rate)
 
   if (status == 0)
   {
+    audio_device.channels         = channels;
     audio_device.frame_duration   = frame_duration;
     audio_device.resample         = HW_SAMPLING_RATE/rate;
     audio_device.samples          = SAMPLES_PER_FRAME (audio_device.frame_duration);
@@ -332,6 +365,7 @@ int32 audio_deinit (void)
   if ((audio_device.playback_handle == NULL) &&
       (audio_device.capture_handle == NULL))
   {
+    audio_device.channels         = 2;
     audio_device.frame_duration   = 0;
     audio_device.resample         = 1;
     audio_device.samples          = 0;
