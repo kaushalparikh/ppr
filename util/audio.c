@@ -258,8 +258,9 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
   }
   
   /* Capture configuration */
-  if ((status = snd_pcm_open (&(audio_device.capture_handle), CAPTURE_DEVICE,
-                              SND_PCM_STREAM_CAPTURE, 0)) < 0)
+  if ((status == 0) &&
+      ((status = snd_pcm_open (&(audio_device.capture_handle), CAPTURE_DEVICE,
+                               SND_PCM_STREAM_CAPTURE, 0)) < 0))
   {
     printf ("Unable to open PCM device for capture\n");
   }
@@ -335,6 +336,10 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
     audio_device.prev_playback[1] = -1;
     
     status = 1;
+  }
+  else
+  {
+    audio_deinit ();
   }
 
   return status;

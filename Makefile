@@ -31,14 +31,14 @@ OBJ_DIR   := $(BUILD_DIR)/obj
 DEP_DIR   := $(BUILD_DIR)/depend
 
 # Input source files
-SRC_MASTER := main.c
+SRC_MASTER := codec.c main.c
 
 # Object & dependency files
-DEP_MASTER := $(patsubst %.c,$(DEP_DIR)/%.d, $(SRC_MASTER))
-OBJ_MASTER := $(patsubst %.c,$(OBJ_DIR)/%.o, $(SRC_MASTER))
+DEP := $(patsubst %.c,$(DEP_DIR)/%.d, $(SRC_MASTER))
+OBJ := $(patsubst %.c,$(OBJ_DIR)/%.o, $(SRC_MASTER))
 
 # System packages
-SYSTEM_PACKAGES := libudev alsa
+SYSTEM_PACKAGES := libudev alsa opus
 
 # System headers/libraries
 ifneq ($(SYSTEM_PACKAGES),)
@@ -76,9 +76,9 @@ endif
 $(TARGET_FILE) : $(TARGET_GOAL)
 	echo
 
-$(BUILD_DIR)/$(TARGET_FILE): $(LOCAL_LIBS) $(OBJ_MASTER)
+$(BUILD_DIR)/$(TARGET_FILE): $(LOCAL_LIBS) $(OBJ)
 	echo "\nBuilding $(patsubst %/$(BUILD_DIR)/, %, $(notdir $@))"
-	$(CC) $(LD_FLAGS) $(DEFINES) $(OBJ_MASTER) $(LOCAL_LIBS) $(SYSTEM_LIBS) -o $@
+	$(CC) $(LD_FLAGS) $(DEFINES) $(OBJ) $(LOCAL_LIBS) $(SYSTEM_LIBS) -o $@
 
 %.a : .FORCE
 	echo
@@ -103,9 +103,7 @@ ifneq ($(MAKECMDGOALS),clean)
         $(shell mkdir -p $(BUILD_DIR))
         $(shell mkdir -p $(OBJ_DIR))
         $(shell mkdir -p $(DEP_DIR))
-        ifneq ($(findstring ble, $(TARGET_FILE)),)
-                -include $(DEP_MASTER)
-        endif
+        -include $(DEP)
 endif
  
 clean :

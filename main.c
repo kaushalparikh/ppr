@@ -3,8 +3,23 @@
 
 #include "types.h"
 #include "util.h"
+#include "codec.h"
 
-int16 audio_buffer[960];
+/* Mono capture/playback */
+#define CHANNELS        (1)
+
+/* Frame duration in millisec. */
+#define FRAME_DURATION  (10)
+
+/* Sampling rate in Hz */
+#define SAMPLING_RATE   (8000)
+
+/* Audio buffer */
+int16 audio_buffer[(CHANNELS*SAMPLING_RATE*FRAME_DURATION)/1000];
+
+/* Codec buffer */
+uint8 codec_buffer[1000];
+
 
 void master_loop (void)
 {
@@ -30,11 +45,13 @@ int main (int argc, char * argv[])
 {
   os_init ();
   
-  if ((audio_init (1, 20, 8000)) > 0)
+  if (((audio_init (CHANNELS, FRAME_DURATION, SAMPLING_RATE)) > 0) &&
+      ((codec_init (CHANNELS, FRAME_DURATION, SAMPLING_RATE)) > 0))
   {
     master_loop ();
   }
 
+  codec_deinit ();
   audio_deinit ();
 
   return 0;
