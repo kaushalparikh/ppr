@@ -6,16 +6,19 @@
 #include "codec.h"
 
 /* Mono capture/playback */
-#define CHANNELS        (1)
+#define CHANNELS            (1)
 
 /* Frame duration in millisec. */
-#define FRAME_DURATION  (10)
+#define FRAME_DURATION     (10)
 
 /* Sampling rate in Hz */
-#define SAMPLING_RATE   (8000)
+#define SAMPLING_RATE      (8000)
+
+/* Samples per frame */
+#define SAMPLES_PER_FRAME  ((SAMPLING_RATE*FRAME_DURATION)/1000)
 
 /* Audio buffer */
-int16 audio_buffer[(CHANNELS*SAMPLING_RATE*FRAME_DURATION)/1000];
+int16 audio_buffer[CHANNELS*SAMPLES_PER_FRAME];
 
 /* Codec buffer */
 uint8 codec_buffer[1000];
@@ -23,7 +26,6 @@ uint8 codec_buffer[1000];
 
 void master_loop (void)
 {
-  int32 status;
   int32 frame = 0;
   int32 start_time = clock_get_count ();
 
@@ -32,9 +34,11 @@ void master_loop (void)
     printf ("Play time %d sec., frame %d: ",
                ((clock_get_count ()) - start_time)/1000, frame++);
 
-    if ((status = audio_capture (audio_buffer, 1)) > 0)
+    if (((audio_capture (audio_buffer, 1)) > 0) &&
+        ((codec_encode (audio_buffer, codec_buffer, 1)) > 0))
     {
-      status = audio_playback (audio_buffer, 1);
+      codec_decode (codec_buffer, audio_buffer, 1);
+      audio_playback (audio_buffer, 1);
     }
 
     printf ("\r");
