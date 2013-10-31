@@ -14,14 +14,16 @@ typedef struct
   void   *encoder;
   void   *decoder;
   uint32  frame_size;
+  uint32  packet_size;
 } codec_t;
 
 /* File scope global variables */
 static codec_t codec =
 {
-  .encoder    = NULL,
-  .decoder    = NULL,
-  .frame_size = 0
+  .encoder     = NULL,
+  .decoder     = NULL,
+  .frame_size  = 0,
+  .packet_size = 0
 };
 
 
@@ -30,7 +32,11 @@ int32 codec_encode (int16 *audio_buffer, uint8 *codec_buffer, uint8 frames)
   int32 status;
 
   if ((status = opus_encode (codec.encoder, audio_buffer, codec.frame_size,
-                             codec_buffer, 1000)) <= 0)
+                             codec_buffer, 1000)) > 0)
+  {
+    codec.packet_size = status;
+  }
+  else
   {
     printf ("Unable to encode audio\n");
     status = -1;
@@ -43,8 +49,8 @@ int32 codec_decode (uint8 *codec_buffer, int16 *audio_buffer, uint8 frames)
 {
   int32 status;
 
-  if ((status = opus_decode (codec.decoder, codec_buffer, 1000,
-                             audio_buffer, codec.frame_size, 1)) <= 0)
+  if ((status = opus_decode (codec.decoder, codec_buffer, codec.packet_size,
+                             audio_buffer, codec.frame_size, 0)) <= 0)
   {
     printf ("Unable to decode audio\n");
     status = -1;
@@ -58,7 +64,7 @@ int32 codec_init (uint8 channels, uint32 frame_duration, uint32 rate)
   int32 status;
 
   codec.encoder = opus_encoder_create (rate, channels,
-                                       OPUS_APPLICATION_VOIP, &status);
+                                       OPUS_APPLICATION_RESTRICTED_LOWDELAY, &status);
   if (status != OPUS_OK)
   {
     printf ("Unable to create encoder\n");
@@ -73,21 +79,21 @@ int32 codec_init (uint8 channels, uint32 frame_duration, uint32 rate)
 
   if ((status == OPUS_OK) &&
       ((status = opus_encoder_ctl (codec.encoder,
-                                   OPUS_SET_BANDWIDTH (OPUS_BANDWIDTH_NARROWBAND))) != OPUS_OK))
+                                   OPUS_SET_BANDWIDTH (OPUS_AUTO))) != OPUS_OK))
   {
     printf ("Unable to set encoder bandwidth\n");
   }
 
   if ((status == OPUS_OK) &&
       ((status = opus_encoder_ctl (codec.encoder,
-                                   OPUS_SET_SIGNAL (OPUS_SIGNAL_VOICE))) != OPUS_OK))
+                                   OPUS_SET_SIGNAL (OPUS_AUTO))) != OPUS_OK))
   {
     printf ("Unable to set encoder bandwidth\n");
   }
 
   if ((status == OPUS_OK) &&
       ((status = opus_encoder_ctl (codec.encoder,
-                                   OPUS_SET_INBAND_FEC (1))) != OPUS_OK))
+                                   OPUS_SET_INBAND_FEC (0))) != OPUS_OK))
   {
     printf ("Unable to set encoder FEC\n");
   }

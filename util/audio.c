@@ -54,61 +54,64 @@ int32 audio_playback (int16 *frame_buffer, uint8 frames)
     short int sample;
     short int interp[2];
 
-    interp[0] = frame_buffer[0] - audio_device.prev_playback[0];
-    for (sample = 0; sample < resample; sample++)
-    {
-      buffer[2*sample]
-        = audio_device.prev_playback[0] + ((sample * interp[0])/resample);
-    }
-    
     if (audio_device.channels > 1)
     {
+      interp[0] = frame_buffer[0] - audio_device.prev_playback[0];
       interp[1] = frame_buffer[1] - audio_device.prev_playback[1];
+      
       for (sample = 0; sample < resample; sample++)
       {
+        buffer[2*sample]
+          = audio_device.prev_playback[0] + ((sample * interp[0])/resample);
         buffer[2*sample+1]
           = audio_device.prev_playback[1] + ((sample * interp[1])/resample);
       }
     }
     else
     {
+      interp[0] = frame_buffer[0] - audio_device.prev_playback[0];
       for (sample = 0; sample < resample; sample++)
       {
+        buffer[2*sample]
+          = audio_device.prev_playback[0] + ((sample * interp[0])/resample);
         buffer[2*sample+1] = buffer[2*sample];
       }
     }
 
     for (count = 1; count < (samples_pending/resample); count++)
     {
-      interp[0] = frame_buffer[2*count] - frame_buffer[2*(count-1)];
-      for (sample = 0; sample < resample; sample++)
-      {
-        buffer[2*(resample*count+sample)]
-          = frame_buffer[2*(count-1)] + ((sample * interp[0])/resample);
-      }
-      
       if (audio_device.channels > 1)
       {
+        interp[0] = frame_buffer[2*count] - frame_buffer[2*(count-1)];
         interp[1] = frame_buffer[2*count+1] - frame_buffer[2*(count-1)+1];
         for (sample = 0; sample < resample; sample++)
         {
+          buffer[2*(resample*count+sample)]
+            = frame_buffer[2*(count-1)] + ((sample * interp[0])/resample);
           buffer[2*(resample*count+sample)+1]
             = frame_buffer[2*(count-1)+1] + ((sample * interp[1])/resample);
         }
       }
       else
       {
+        interp[0] = frame_buffer[count] - frame_buffer[count-1];
         for (sample = 0; sample < resample; sample++)
         {
+          buffer[2*(resample*count+sample)]
+            = frame_buffer[count-1] + ((sample * interp[0])/resample);
           buffer[2*(resample*count+sample)+1] = buffer[2*(resample*count+sample)];
         }
       }
     }
 
-    audio_device.prev_playback[0] = frame_buffer[2*(count-1)];
     if (audio_device.channels > 1)
     {
+      audio_device.prev_playback[0] = frame_buffer[2*(count-1)];
       audio_device.prev_playback[1] = frame_buffer[2*(count-1)+1];
+    }
+    else
+    {
+      audio_device.prev_playback[0] = frame_buffer[count-1];
     }
   }
 
@@ -171,16 +174,19 @@ int32 audio_capture (int16 *frame_buffer, uint8 frames)
   {
     unsigned int count;
     
-    for (count = 0; count < (samples_read/resample); count++)
-    {
-      frame_buffer[2*count]   = buffer[2*resample*count];
-    }
-    
     if (audio_device.channels > 1)
     {
       for (count = 0; count < (samples_read/resample); count++)
       {
+        frame_buffer[2*count]   = buffer[2*resample*count];
         frame_buffer[2*count+1] = buffer[2*resample*count+1];
+      }
+    }
+    else
+    {
+      for (count = 0; count < (samples_read/resample); count++)
+      {
+        frame_buffer[count] = buffer[2*resample*count];
       }
     }
   }

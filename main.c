@@ -12,7 +12,7 @@
 #define FRAME_DURATION     (10)
 
 /* Sampling rate in Hz */
-#define SAMPLING_RATE      (8000)
+#define SAMPLING_RATE      (16000)
 
 /* Samples per frame */
 #define SAMPLES_PER_FRAME  ((SAMPLING_RATE*FRAME_DURATION)/1000)
@@ -40,7 +40,7 @@ void master_loop (void)
       codec_decode (codec_buffer, audio_buffer, 1);
       audio_playback (audio_buffer, 1);
     }
-
+ 
     printf ("\r");
   }
 }
