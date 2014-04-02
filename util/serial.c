@@ -40,7 +40,7 @@ static serial_device_t serial_device =
     {
       .dev_node           = NULL,
       .dev_sys_path       = NULL,
-      .dev_subsystem_node = NULL,
+      .dev_subsystem_node = "/dev/ttyS0",
       .bus_num            = 255,
       .dev_num            = 255,
       .next               = NULL
