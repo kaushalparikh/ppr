@@ -31,7 +31,7 @@ OBJ_DIR   := $(BUILD_DIR)/obj
 DEP_DIR   := $(BUILD_DIR)/depend
 
 # Input source files
-SRC := usb.c timer.c serial.c audio.c os.c
+SRC := usb.c timer.c serial.c audio.c input.c os.c
 
 # Object & dependency files
 DEP := $(patsubst %.c,$(DEP_DIR)/%.d, $(SRC))

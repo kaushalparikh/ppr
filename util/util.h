@@ -40,6 +40,10 @@ extern int32 audio_playback (int16 *frame_buffer, uint8 frames);
 
 extern int32 audio_capture (int16 *frame_buffer, uint8 frames);
 
+extern int32 audio_playback_pause (void);
+
+extern int32 audio_capture_pause (void);
+
 /* Timer API */
 typedef struct
 {
@@ -59,6 +63,13 @@ extern int32 timer_stop (timer_info_t *timer_info);
 extern int32 clock_get_count (void);
 
 extern int8 * clock_get_time (void);
+
+/* Input API */
+extern int32 input_init (void);
+
+extern int32 input_deinit (void);
+
+extern int32 input_read (void);
 
 /* String/Binary API */
 
