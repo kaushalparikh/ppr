@@ -42,11 +42,7 @@ void master_loop (void)
   {
     int talk = input_read ();
 
-    if ((radio_state < 0) && (talk > 0))
-    {
-      audio_playback_pause ();
-    }
-    else if ((radio_state > 0) && (talk < 0))
+    if ((radio_state > 0) && (talk < 0))
     {
       audio_capture_pause ();
     }
@@ -65,6 +61,11 @@ void master_loop (void)
         codec_decode (codec_buffer, audio_buffer, 1);
         audio_playback (audio_buffer, 1);
       }
+    }
+    if (radio_state < 0)
+    {
+      codec_decode (NULL, audio_buffer, 1);
+      audio_playback (audio_buffer, 1);
     }
 
     printf ("\r");

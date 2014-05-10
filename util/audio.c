@@ -159,7 +159,7 @@ int32 audio_playback (int16 *frame_buffer, uint8 frames)
     {
       if ((status = snd_pcm_prepare (audio_device.playback_handle)) < 0)
       {
-        printf ("Unable to prepare playback\n");
+        printf ("Unable to start playback\n");
         break;
       }
     }
@@ -190,7 +190,7 @@ int32 audio_capture (int16 *frame_buffer, uint8 frames)
     {
       if ((status = snd_pcm_prepare (audio_device.capture_handle)) < 0)
       {
-        printf ("Unable to prepare capture\n");
+        printf ("Unable to start capture\n");
         break;
       }
     }
