@@ -37,6 +37,23 @@ static int32 radio_state;
 void master_loop (void)
 {
   int32 start_time = clock_get_count ();
+  int32 loopback = 10;
+
+  /* Loopback init of decoder */
+  while (loopback > 0)
+  {
+    if (((audio_capture (audio_buffer, 1)) > 0) &&
+        ((codec_encode (audio_buffer, codec_buffer, 1)) > 0))
+    {
+      codec_decode (codec_buffer, audio_buffer, 1);
+      audio_playback (audio_buffer, 1);
+    }
+
+    loopback--;
+  }
+
+  audio_capture_pause ();
+  radio_state = RADIO_STATE_RX;
 
   while (1)
   {
@@ -62,7 +79,7 @@ void master_loop (void)
         audio_playback (audio_buffer, 1);
       }
     }
-    if (radio_state < 0)
+    else if (radio_state < 0)
     {
       codec_decode (NULL, audio_buffer, 1);
       audio_playback (audio_buffer, 1);
@@ -80,9 +97,6 @@ int32 main (int32 argc, int8 * argv[])
       ((audio_init (CHANNELS, FRAME_DURATION, SAMPLING_RATE)) > 0) &&
       ((codec_init (CHANNELS, FRAME_DURATION, SAMPLING_RATE)) > 0))
   {
-    radio_state = RADIO_STATE_RX;
-
-    audio_capture_pause ();
     master_loop ();
   }
 

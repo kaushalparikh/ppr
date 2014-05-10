@@ -32,11 +32,7 @@ int32 codec_encode (int16 *audio_buffer, uint8 *codec_buffer, uint8 frames)
   int32 status;
 
   if ((status = opus_encode (codec.encoder, audio_buffer, codec.frame_size,
-                             codec_buffer, 1000)) > 0)
-  {
-    codec.packet_size = status;
-  }
-  else
+                             codec_buffer, 1000)) <= 0)
   {
     printf ("Unable to encode audio\n");
     status = -1;
@@ -120,7 +116,8 @@ int32 codec_init (uint8 channels, uint32 frame_duration, uint32 rate)
 
   if (status == OPUS_OK)
   {
-    codec.frame_size = (rate * frame_duration)/1000;
+    codec.frame_size  = (rate * frame_duration)/1000;
+    codec.packet_size = (((BITRATE * frame_duration)/1000) + 7)/8;
     status = 1;
   }
   else

@@ -279,7 +279,7 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
   
   if ((status == 0) &&
       ((status = snd_pcm_hw_params_set_buffer_time (audio_device.playback_handle,
-                                                    audio_hw, (10*frame_duration*1000), 0)) < 0))
+                                                    audio_hw, (2*frame_duration*1000), 0)) < 0))
   {
     printf ("Unable to set playback buffer size\n");
   }
@@ -349,7 +349,7 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
  
   if ((status == 0) &&
       ((status = snd_pcm_hw_params_set_buffer_time (audio_device.capture_handle,
-                                                    audio_hw, (10*frame_duration*1000), 0)) < 0))
+                                                    audio_hw, (2*frame_duration*1000), 0)) < 0))
   {
     printf ("Unable to set capture buffer size\n");
   }
