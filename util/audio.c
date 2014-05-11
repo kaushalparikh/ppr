@@ -40,33 +40,61 @@ static audio_device_t audio_device =
 };
 
 
-int32 audio_playback_pause (void)
+int32 audio_playback_pause (int32 pause)
 {
   int status = -1;
 
-  if ((status = snd_pcm_drop (audio_device.playback_handle)) == 0)
+  if (pause)
   {
-    status = 1;
+    if ((status = snd_pcm_drop (audio_device.playback_handle)) == 0)
+    {
+      status = 1;
+    }
+    else
+    {
+      printf ("Unable to pause playback\n");
+    }
   }
   else
   {
-    printf ("Unable to pause playback\n");
+    if ((status = snd_pcm_prepare (audio_device.playback_handle)) == 0)
+    {
+      status = 1;
+    }
+    else
+    {
+      printf ("Unable to start playback\n");
+    }
   }
 
   return status;
 }
 
-int32 audio_capture_pause (void)
+int32 audio_capture_pause (int32 pause)
 {
   int status = -1;
 
-  if ((status = snd_pcm_drop (audio_device.capture_handle)) == 0)
+  if (pause)
   {
-    status = 1;
+    if ((status = snd_pcm_drop (audio_device.capture_handle)) == 0)
+    {
+      status = 1;
+    }
+    else
+    {
+      printf ("Unable to pause capture\n");
+    }
   }
   else
   {
-    printf ("Unable to pause capture\n");
+    if ((status = snd_pcm_prepare (audio_device.capture_handle)) == 0)
+    {
+      status = 1;
+    }
+    else
+    {
+      printf ("Unable to start capture\n");
+    }
   }
   
   return status;
@@ -76,7 +104,7 @@ int32 audio_playback (int16 *frame_buffer, uint8 frames)
 {
   int status = -1;
   unsigned int samples_written = 0;
-  unsigned samples_pending = audio_device.samples * frames;
+  unsigned int samples_pending = audio_device.samples * frames;
   short int resample = audio_device.resample;
   short int *buffer = (short int *)malloc (2 * samples_pending * sizeof (short int));
   
@@ -157,6 +185,7 @@ int32 audio_playback (int16 *frame_buffer, uint8 frames)
     }
     else
     {
+      printf (" | Playback error: %s, restarting\n", snd_strerror (status));
       if ((status = snd_pcm_prepare (audio_device.playback_handle)) < 0)
       {
         printf ("Unable to start playback\n");
@@ -188,6 +217,7 @@ int32 audio_capture (int16 *frame_buffer, uint8 frames)
     }
     else
     {
+      printf (" | Capture error: %s, restarting\n", snd_strerror (status));
       if ((status = snd_pcm_prepare (audio_device.capture_handle)) < 0)
       {
         printf ("Unable to start capture\n");
@@ -226,6 +256,10 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
 {
   int status;
   snd_pcm_hw_params_t *audio_hw = NULL;
+  snd_pcm_sw_params_t *audio_sw = NULL;
+  snd_pcm_uframes_t frame_size = SAMPLES_PER_FRAME (frame_duration);
+  snd_pcm_uframes_t start_threshold = 2 * frame_size;
+  snd_pcm_uframes_t buffer_size = start_threshold + frame_size;
 
   /* Playback configuration */
   if ((status = snd_pcm_open (&(audio_device.playback_handle), PLAYBACK_DEVICE,
@@ -237,7 +271,7 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
   if ((status == 0) &&
       ((status = snd_pcm_hw_params_malloc (&audio_hw)) < 0))
   {
-    printf ("Unable to allocate memory for playback configuration\n");
+    printf ("Unable to allocate memory for playback hardware configuration\n");
   }
   
   if ((status == 0) &&
@@ -278,22 +312,65 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
   }
   
   if ((status == 0) &&
-      ((status = snd_pcm_hw_params_set_buffer_time (audio_device.playback_handle,
-                                                    audio_hw, (2*frame_duration*1000), 0)) < 0))
+      ((status = snd_pcm_hw_params_set_buffer_size (audio_device.playback_handle,
+                                                    audio_hw, buffer_size)) < 0))
   {
     printf ("Unable to set playback buffer size\n");
+  }
+
+  {
+    snd_pcm_uframes_t tmp;
+    snd_pcm_hw_params_get_buffer_size (audio_hw, &tmp);
+    printf ("Playback buffer size %d samples\n", tmp);
   }
 
   if ((status == 0) &&
       ((status = snd_pcm_hw_params (audio_device.playback_handle, audio_hw)) < 0))
   {
-    printf ("Unable to apply playback configuration\n");
+    printf ("Unable to apply playback hardware configuration\n");
+  }
+
+  if ((status == 0) &&
+      ((status = snd_pcm_sw_params_malloc (&audio_sw)) < 0))
+  {
+    printf ("Unable to allocate memory for playback software configuration\n");
+  }
+  
+  if ((status == 0) &&
+      ((status = snd_pcm_sw_params_malloc (&audio_sw)) < 0))
+  {
+    printf ("Unable to allocate memory for playback software configuration\n");
+  }
+  
+  if ((status == 0) &&
+      ((status = snd_pcm_sw_params_current (audio_device.playback_handle, audio_sw)) < 0))
+  {
+    printf ("Unable to get playback current software configuration\n");
+  }
+  
+  if ((status == 0) &&
+      ((status = snd_pcm_sw_params_set_start_threshold (audio_device.playback_handle,
+                                                        audio_sw, start_threshold)) < 0))
+  {
+    printf ("Unable to set playback start threshold\n");
+  }
+
+  if ((status == 0) &&
+      ((status = snd_pcm_sw_params (audio_device.playback_handle, audio_sw)) < 0))
+  {
+    printf ("Unable to apply playback software configuration\n");
   }
 
   if (audio_hw != NULL)
   {
     snd_pcm_hw_params_free (audio_hw);
     audio_hw = NULL;
+  }
+  
+  if (audio_sw != NULL)
+  {
+    snd_pcm_sw_params_free (audio_sw);
+    audio_sw = NULL;
   }
   
   /* Capture configuration */
@@ -348,10 +425,16 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
   }
  
   if ((status == 0) &&
-      ((status = snd_pcm_hw_params_set_buffer_time (audio_device.capture_handle,
-                                                    audio_hw, (2*frame_duration*1000), 0)) < 0))
+      ((status = snd_pcm_hw_params_set_buffer_size (audio_device.capture_handle,
+                                                    audio_hw, buffer_size)) < 0))
   {
     printf ("Unable to set capture buffer size\n");
+  }
+  
+  {
+    snd_pcm_uframes_t tmp;
+    snd_pcm_hw_params_get_buffer_size (audio_hw, &tmp);
+    printf ("Capture buffer size %d samples\n", tmp);
   }
 
   if ((status == 0) &&
@@ -361,9 +444,28 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
   }
     
   if ((status == 0) &&
-      ((status = snd_pcm_start (audio_device.capture_handle)) < 0))
+      ((status = snd_pcm_sw_params_malloc (&audio_sw)) < 0))
   {
-    printf ("Unable to start capture\n");
+    printf ("Unable to allocate memory for capture software configuration\n");
+  }
+  
+  if ((status == 0) &&
+      ((status = snd_pcm_sw_params_current (audio_device.capture_handle, audio_sw)) < 0))
+  {
+    printf ("Unable to get capture current software configuration\n");
+  }
+  
+  if ((status == 0) &&
+      ((status = snd_pcm_sw_params_set_start_threshold (audio_device.capture_handle,
+                                                        audio_sw, 1)) < 0))
+  {
+    printf ("Unable to set capture start threshold\n");
+  }
+
+  if ((status == 0) &&
+      ((status = snd_pcm_sw_params (audio_device.capture_handle, audio_sw)) < 0))
+  {
+    printf ("Unable to apply capture software configuration\n");
   }
 
   if (audio_hw != NULL)
@@ -371,13 +473,19 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
     snd_pcm_hw_params_free (audio_hw);
     audio_hw = NULL;
   }
+  
+  if (audio_hw != NULL)
+  {
+    snd_pcm_sw_params_free (audio_sw);
+    audio_sw = NULL;
+  }
 
   if (status == 0)
   {
     audio_device.channels         = channels;
     audio_device.frame_duration   = frame_duration;
     audio_device.resample         = HW_SAMPLING_RATE/rate;
-    audio_device.samples          = SAMPLES_PER_FRAME (audio_device.frame_duration);
+    audio_device.samples          = SAMPLES_PER_FRAME (frame_duration);
     audio_device.prev_playback[0] = -1;
     audio_device.prev_playback[1] = -1;
     
