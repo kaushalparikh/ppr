@@ -18,8 +18,8 @@
 /* Verbose serial output */
 /* #define DEBUG_VERBOSE  (1) */
 
-/* Defines, 1000 ms */
-#define SERIAL_TIMEOUT  (100)
+/* Defines, 10 ms */
+#define SERIAL_TIMEOUT  (1)
 
 /* Local structures */
 typedef struct
@@ -205,8 +205,13 @@ int32 serial_open (void)
 
 void serial_close (void)
 {
-  tcdrain (serial_device.file_desc);
-  close (serial_device.file_desc);
+  if (serial_device.file_desc > 0)
+  {
+    tcdrain (serial_device.file_desc);
+    close (serial_device.file_desc);
+
+    serial_device.file_desc = -1;
+  }
 }
 
 int32 serial_tx (uint32 bytes, uint8 *buffer)

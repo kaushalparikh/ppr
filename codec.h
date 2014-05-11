@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+extern uint32 codec_packetsize (void);
+
 extern int32 codec_init (uint8 channels, uint32 frame_duration, uint32 rate);
 
 extern int32 codec_deinit (void);

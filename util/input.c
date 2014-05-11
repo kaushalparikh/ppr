@@ -7,21 +7,23 @@
 #include "types.h"
 #include "util.h"
 
+
 static int8 talk = 'r';
+static struct termios read_fd_config;
 
 
 int32 input_init (void)
 {
-  struct termios read_fd_config;
   int status;
 
   status = tcgetattr (0, &read_fd_config);
   if (status == 0)
   {
-    read_fd_config.c_lflag &= ~(ICANON | ECHO);
-    read_fd_config.c_cc[VMIN]  = 0;
-    read_fd_config.c_cc[VTIME] = 0;
-    status = tcsetattr (0, TCSANOW, &read_fd_config);
+    struct termios modified_config = read_fd_config;
+    modified_config.c_lflag &= ~(ICANON | ECHO);
+    modified_config.c_cc[VMIN]  = 0;
+    modified_config.c_cc[VTIME] = 0;
+    status = tcsetattr (0, TCSANOW, &modified_config);
   }
   
   if (status == 0)
@@ -39,7 +41,7 @@ int32 input_init (void)
 
 int32 input_deinit (void)
 {
-  return 1;
+  return tcsetattr (0, TCSANOW, &read_fd_config);
 }
 
 int32 input_read (void)

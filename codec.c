@@ -27,6 +27,11 @@ static codec_t codec =
 };
 
 
+uint32 codec_packetsize (void)
+{
+  return codec.packet_size;
+}
+
 int32 codec_encode (int16 *audio_buffer, uint8 *codec_buffer, uint8 frames)
 {
   int32 status;
