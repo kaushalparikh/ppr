@@ -39,7 +39,7 @@ int32 codec_encode (int16 *audio_buffer, uint8 *codec_buffer, uint8 frames)
   if ((status = opus_encode (codec.encoder, audio_buffer, codec.frame_size,
                              codec_buffer, 1000)) <= 0)
   {
-    printf ("Unable to encode audio\n");
+    printf ("Encode error: %d\n", status);
     status = -1;
   }
 
@@ -53,7 +53,7 @@ int32 codec_decode (uint8 *codec_buffer, int16 *audio_buffer, uint8 frames)
   if ((status = opus_decode (codec.decoder, codec_buffer, codec.packet_size,
                              audio_buffer, codec.frame_size, 0)) <= 0)
   {
-    printf ("Unable to decode audio\n");
+    printf ("Decode error: %d\n", status);
     status = -1;
   }
 
@@ -65,7 +65,7 @@ int32 codec_init (uint8 channels, uint32 frame_duration, uint32 rate)
   int32 status;
 
   codec.encoder = opus_encoder_create (rate, channels,
-                                       OPUS_APPLICATION_RESTRICTED_LOWDELAY, &status);
+                                       OPUS_APPLICATION_VOIP, &status);
   if (status != OPUS_OK)
   {
     printf ("Unable to create encoder\n");

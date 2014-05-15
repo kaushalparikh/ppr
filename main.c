@@ -10,7 +10,7 @@
 #define CHANNELS            (1)
 
 /* Frame duration in millisec. */
-#define FRAME_DURATION     (10)
+#define FRAME_DURATION     (60)
 
 /* Sampling rate in Hz */
 #define SAMPLING_RATE      (16000)
@@ -151,7 +151,7 @@ static void master_loopback (void)
 int32 main (int32 argc, int8 * argv[])
 {
   int32 loopback = 0;
-  int8 option;
+  int32 option;
 
   while ((option = getopt (argc, argv, "l")) != -1)
   {
