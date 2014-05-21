@@ -50,10 +50,11 @@ typedef struct
   void    *handle;
   int32    millisec;
   int32    event;
+  int32    periodic;
   void   (*callback)(void *);
 } timer_info_t;
 
-extern int32 timer_start (int32 millisec, int32 event,
+extern int32 timer_start (int32 millisec, int32 event, int32 periodic,
                           void (*callback)(void *), timer_info_t **timer_info);
 
 extern int32 timer_status (timer_info_t *timer_info);

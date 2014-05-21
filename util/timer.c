@@ -13,11 +13,15 @@ static void timer_event (int event_id, siginfo_t *event_info, void *unused)
 {
   timer_info_t *timer_info = event_info->si_value.sival_ptr;
   timer_info->callback (timer_info);
-  timer_delete ((timer_t)(timer_info->handle));
-  free (timer_info);
+
+  if (!(timer_info->periodic))
+  {
+    timer_delete ((timer_t)(timer_info->handle));
+    free (timer_info);
+  }
 }
 
-int32 timer_start (int32 millisec, int32 event,
+int32 timer_start (int32 millisec, int32 event, int32 periodic,
                    void (*callback)(void *), timer_info_t **timer_info)
 {
   struct sigaction timer_action;
@@ -30,6 +34,7 @@ int32 timer_start (int32 millisec, int32 event,
   /* Fill timer info */
   (*timer_info)->millisec = millisec;
   (*timer_info)->event    = event;
+  (*timer_info)->periodic = periodic;
   (*timer_info)->callback = callback;
 
   /* Establish handler for timer signal */
@@ -51,9 +56,17 @@ int32 timer_start (int32 millisec, int32 event,
       (*timer_info)->handle = (void *)timer_id;
       timer_spec.it_value.tv_sec  = millisec / 1000;
       timer_spec.it_value.tv_nsec = (millisec % 1000) * 1000000;
-      /* One-shot timer */
-      timer_spec.it_interval.tv_sec  = 0;
-      timer_spec.it_interval.tv_nsec = 0;
+      
+      if ((*timer_info)->periodic)
+      {
+        timer_spec.it_interval.tv_sec  = timer_spec.it_value.tv_sec;
+        timer_spec.it_interval.tv_nsec = timer_spec.it_value.tv_nsec;
+      }
+      else
+      {
+        timer_spec.it_interval.tv_sec  = 0;
+        timer_spec.it_interval.tv_nsec = 0;
+      }
   
       /* Start timer */
       status = timer_settime (timer_id, 0, &timer_spec, NULL);
@@ -133,9 +146,14 @@ int8 * clock_get_time (void)
 
 #ifdef UTIL_TIMER_TEST
 
+#include <unistd.h>
+
+static int timer_expiry_count = 0;
+
 void callback (void *timer_info)
 {
-  printf ("Timer %d expired\n", ((timer_info_t *)timer_info)->handle);
+  timer_expiry_count++;
+  printf ("Timer expired %d\n", timer_expiry_count);
 }
 
 int main (void)
@@ -143,9 +161,16 @@ int main (void)
   timer_info_t *timer_info = NULL;
   int status;
 
-  status = timer_start (3000, 0, callback, &timer_info);
-  sleep (4);
-  status = timer_start (3000, 0, callback, &timer_info);
+  status = timer_start (1000, 0, 1, callback, &timer_info);
+  while (timer_expiry_count < 10)
+  {
+  }
+  status = timer_stop (timer_info);
+
+  status = timer_start (3000, 0, 0, callback, &timer_info);
+  sleep (5);
+
+  status = timer_start (3000, 0, 0, callback, &timer_info);
   sleep (2);
   status = timer_stop (timer_info);
 
