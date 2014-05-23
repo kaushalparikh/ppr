@@ -177,8 +177,9 @@ int32 audio_playback (int16 *frame_buffer, uint8 frames)
 
   while (samples_pending > 0)
   {
+    /* printf (" | Playback samples available %d", (int)snd_pcm_avail (audio_device.playback_handle)); */
     if ((status = snd_pcm_writei (audio_device.playback_handle,
-                                  &(buffer[2*samples_written]), samples_pending)) > 0)
+                                  &(buffer[2*samples_written]), samples_pending)) >= 0)
     {
       samples_written += status;
       samples_pending -= status;
@@ -210,8 +211,9 @@ int32 audio_capture (int16 *frame_buffer, uint8 frames)
 
   while (samples_pending > 0)
   {
+    /* printf (" | Capture samples available %d", (int)snd_pcm_avail (audio_device.capture_handle)); */
     if ((status = snd_pcm_readi (audio_device.capture_handle,
-                                 &(buffer[2*samples_read]), samples_pending)) > 0)
+                                 &(buffer[2*samples_read]), samples_pending)) >= 0)
     {
       samples_read    += status;
       samples_pending -= status;
@@ -260,8 +262,8 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
   snd_pcm_hw_params_t *audio_hw = NULL;
   snd_pcm_sw_params_t *audio_sw = NULL;
   snd_pcm_uframes_t frame_size = SAMPLES_PER_FRAME (frame_duration);
-  snd_pcm_uframes_t start_threshold = 2 * frame_size;
   snd_pcm_uframes_t buffer_size;
+  snd_pcm_uframes_t period_size;
 
   /* Playback configuration */
   if ((status = snd_pcm_open (&(audio_device.playback_handle), PLAYBACK_DEVICE,
@@ -313,12 +315,20 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
     printf ("Unable to set playback channels\n");
   }
   
-  buffer_size = start_threshold + frame_size;
+  buffer_size = 3*frame_size;
   if ((status == 0) &&
       ((status = snd_pcm_hw_params_set_buffer_size_min (audio_device.playback_handle,
                                                         audio_hw, &buffer_size)) < 0))
   {
     printf ("Unable to set playback buffer size\n");
+  }
+
+  period_size = frame_size/2;
+  if ((status == 0) &&
+      ((status = snd_pcm_hw_params_set_period_size (audio_device.playback_handle,
+                                                    audio_hw, period_size, 0)) < 0))
+  {
+    printf ("Unable to set capture period size\n");
   }
 
   if ((status == 0) &&
@@ -347,7 +357,7 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
   
   if ((status == 0) &&
       ((status = snd_pcm_sw_params_set_start_threshold (audio_device.playback_handle,
-                                                        audio_sw, start_threshold)) < 0))
+                                                        audio_sw, 2*frame_size)) < 0))
   {
     printf ("Unable to set playback start threshold\n");
   }
@@ -421,12 +431,20 @@ int32 audio_init (uint8 channels, uint32 frame_duration, uint32 rate)
     printf ("Unable to set capture channels\n");
   }
  
-  buffer_size = start_threshold + frame_size;
+  buffer_size = 3*frame_size;
   if ((status == 0) &&
       ((status = snd_pcm_hw_params_set_buffer_size_min (audio_device.capture_handle,
                                                         audio_hw, &buffer_size)) < 0))
   {
     printf ("Unable to set capture buffer size\n");
+  }
+
+  period_size = frame_size/2;
+  if ((status == 0) &&
+      ((status = snd_pcm_hw_params_set_period_size (audio_device.capture_handle,
+                                                    audio_hw, period_size, 0)) < 0))
+  {
+    printf ("Unable to set capture period size\n");
   }
   
   if ((status == 0) &&

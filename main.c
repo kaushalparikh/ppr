@@ -111,7 +111,7 @@ static void master_loopback (void)
 {
   int32 start_time = clock_get_count ();
 
-  radio_state = RADIO_STATE_RX;
+  radio_state = RADIO_STATE_TX;
 
   while (1)
   {
