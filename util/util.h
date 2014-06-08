@@ -13,8 +13,16 @@ enum
 
 extern void os_init (void);
 
+extern int32 os_create_sem (void **handle);
+
+extern int32 os_wait_sem (void *handle, int32 timeout);
+
+extern int32 os_post_sem (void *handle);
+
+extern int32 os_destroy_sem (void *handle);
+
 extern int32 os_create_thread (void * (*start_function)(void *), uint8 priority,
-                               int32 timeout, void **handle);
+                               void *data, void **handle);
 
 extern int32 os_destroy_thread (void *handle);
 
