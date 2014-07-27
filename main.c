@@ -178,13 +178,13 @@ static void master_loop (int32 radio_on)
 
   while (1)
   {
-    int32 talk = input_read ();
+    uint32 talk = input_read ();
 
-    if ((radio_state > 0) && (talk < 0))
+    if ((radio_state > 0) && (talk == 0))
     {
       radio_state = RADIO_STATE_TX_SWITCH;
     }
-    else if ((radio_state < 0) && (talk > 0))
+    else if ((radio_state < 0) && (talk & (0x1 << INPUT_PTT)))
     {
       radio_state = RADIO_STATE_RX_SWITCH;
     }

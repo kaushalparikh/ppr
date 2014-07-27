@@ -74,11 +74,20 @@ extern int32 clock_get_count (void);
 extern int8 * clock_get_time (void);
 
 /* Input API */
+enum
+{
+  INPUT_PTT,
+  INPUT_AAA,
+  INPUT_BBB,
+  INPUT_CCC,
+  INPUT_MAX
+};
+
 extern int32 input_init (void);
 
 extern int32 input_deinit (void);
 
-extern int32 input_read (void);
+extern uint32 input_read (void);
 
 /* String/Binary API */
 

@@ -10,7 +10,7 @@ CC_FLAGS  := -c -Wall -O3 -g -fno-strict-aliasing -Wno-unused-function -D_GNU_SO
 DEP_FLAGS := -MM -MT
 
 # Compiler definitions
-DEFINES :=
+DEFINES := $(DEFS)
 
 # Archiver specifications
 AR 	 := $(ARCH_PREFIX)ar
