@@ -80,7 +80,7 @@ enum
   INPUT_AAA,
   INPUT_BBB,
   INPUT_CCC,
-  INPUT_MAX
+  NUM_INPUTS
 };
 
 extern int32 input_init (void);

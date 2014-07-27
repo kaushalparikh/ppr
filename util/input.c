@@ -29,32 +29,36 @@ typedef struct
   int value_fd;
 } gpio_info_t;
 
-static gpio_info_t gpio_info[] =
+static gpio_info_t gpio_info[NUM_INPUTS] =
 {
-  {
-    .number    = "0",
-    .direction = "in",
-    .edge      = "none",
-    .value_fd  = -1,
-  },
-  {
-    .number    = "1",
-    .direction = "in",
-    .edge      = "none",
-    .value_fd  = -1,
-  },
-  {
-    .number    = "2",
-    .direction = "in",
-    .edge      = "none",
-    .value_fd  = -1,
-  },
-  {
-    .number    = "3",
-    .direction = "in",
-    .edge      = "none",
-    .value_fd  = -1,
-  }
+  [INPUT_PTT] =
+    {
+      .number    = "0",
+      .direction = "in",
+      .edge      = "none",
+      .value_fd  = -1,
+    },
+  [INPUT_AAA] =
+    {
+      .number    = "1",
+      .direction = "in",
+      .edge      = "none",
+      .value_fd  = -1,
+    },
+  [INPUT_BBB] =
+    {
+      .number    = "2",
+      .direction = "in",
+      .edge      = "none",
+      .value_fd  = -1,
+    },
+  [INPUT_CCC] =
+    {
+      .number    = "3",
+      .direction = "in",
+      .edge      = "none",
+      .value_fd  = -1,
+    }
 }; 
 #endif
 
@@ -91,7 +95,7 @@ int32 input_init (void)
 	fd = open (SYS_GPIO_EXPORT, O_WRONLY);
   if (fd > 0)
   {
-    for (count = 0; count < INPUT_MAX; count++)
+    for (count = 0; count < NUM_INPUTS; count++)
     {
       char *gpio_number = gpio_info[count].number;
 	    if ((write (fd, gpio_number, strlen (gpio_number))) <= 0)
@@ -112,7 +116,7 @@ int32 input_init (void)
   if (status > 0)
   {
     /* Set GPIO direction */
-    for (count = 0; count < INPUT_MAX; count++)
+    for (count = 0; count < NUM_INPUTS; count++)
     {
       char *gpio_direction = gpio_info[count].direction;
       
@@ -126,7 +130,7 @@ int32 input_init (void)
     }
     
     /* Set GPIO edge */
-    for (count = 0; count < INPUT_MAX; count++)
+    for (count = 0; count < NUM_INPUTS; count++)
     {
       char *gpio_edge = gpio_info[count].edge;
       
@@ -140,7 +144,7 @@ int32 input_init (void)
     }
     
     /* Open value FD */
-    for (count = 0; count < INPUT_MAX; count++)
+    for (count = 0; count < NUM_INPUTS; count++)
     {
       fd = open (SYS_GPIO_VALUE (atoi (gpio_info[count].number)), O_WRONLY);
       if (fd > 0)
@@ -168,7 +172,7 @@ int32 input_deinit (void)
   int fd;
 
   /* Close value FD */
-  for (count = 0; count < INPUT_MAX; count++)
+  for (count = 0; count < NUM_INPUTS; count++)
   {
     if (gpio_info[count].value_fd > 0)
     {
@@ -181,7 +185,7 @@ int32 input_deinit (void)
 	fd = open (SYS_GPIO_UNEXPORT, O_WRONLY);
   if (fd > 0)
   {
-    for (count = 0; count < INPUT_MAX; count++)
+    for (count = 0; count < NUM_INPUTS; count++)
     {
       char *gpio_number = gpio_info[count].number;
 	    if ((write (fd, gpio_number, strlen (gpio_number))) <= 0)
@@ -228,7 +232,7 @@ uint32 input_read (void)
 #else
   int count;
 
-  for (count = 0; count < INPUT_MAX; count++)
+  for (count = 0; count < NUM_INPUTS; count++)
   {
     char value;
     if ((read (gpio_info[count].value_fd, &value, 1)) > 0)
